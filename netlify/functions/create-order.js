@@ -1,3 +1,4 @@
+
 const Razorpay = require("razorpay");
 
 const prices = [
@@ -13,14 +14,22 @@ exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ error: "Method not allowed" })
     };
   }
 
   try {
-    if (!process.env.RAZORPAY_KEY_ID ||
-        !process.env.RAZORPAY_KEY_SECRET) {
-      throw new Error("Razorpay keys are not configured");
+    if (
+      !process.env.RAZORPAY_KEY_ID ||
+      !process.env.RAZORPAY_KEY_SECRET
+    ) {
+      console.error("Razorpay environment variables are missing");
+
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: "Payment configuration missing" })
+      };
     }
 
     const body = JSON.parse(event.body || "{}");
@@ -88,6 +97,7 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 500,
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ error: "Unable to create payment order" })
     };
   }
