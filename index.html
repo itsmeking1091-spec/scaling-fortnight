@@ -6,7 +6,9 @@
 <style>
 :root{--site-primary:#e85b16;--site-secondary:#25120d;--site-background:#fff8f0;--site-on-primary:#ffffff;--site-on-secondary:#ffffff;--site-on-background:#241812;--site-font-body:system-ui,-apple-system,Segoe UI,sans-serif;--site-font-heading:system-ui,-apple-system,Segoe UI,sans-serif;--site-heading-scale:1;--site-spacing-scale:1;--site-radius-scale:1;--site-decoration-opacity:1;color-scheme:light dark}
 *{box-sizing:border-box}body{margin:0;font-family:var(--site-font-body);background:light-dark(#fff8f0,#171311);color:light-dark(#241812,#f8eee7)}#app{min-height:100vh;background-color:var(--site-background);color:var(--site-on-background);border-radius:0}.hero{background:var(--site-secondary);color:white;padding:26px 18px 22px;text-align:center;border-bottom:5px solid var(--site-primary)}.eyebrow{text-transform:uppercase;letter-spacing:2px;font-size:12px;color:#ffbd78;font-weight:800}.hero h1{font-size:clamp(27px,5vw,42px);line-height:1.05;margin:9px 0 6px;font-weight:950}.hero p{margin:6px 0;color:#f9dfce}.time{display:inline-flex;gap:8px;align-items:center;border:1px solid #a95a2d;border-radius:30px;padding:8px 13px;margin-top:10px;font-size:13px;font-weight:750}.wrap{max-width:1050px;margin:auto;padding:18px 14px 35px}.search{width:100%;border:1px solid #dfc5b0;border-radius:12px;padding:13px 14px;font:inherit;background:white;color:#241812;margin-bottom:14px}.tabs{display:flex;gap:8px;overflow:auto;padding-bottom:12px}.tab{border:1px solid #e4cbb8;background:white;color:#4b2b1c;border-radius:24px;padding:9px 14px;white-space:nowrap;font-weight:750;cursor:pointer}.tab.active{background:var(--site-primary);color:white;border-color:var(--site-primary)}.section-title{margin:18px 0 10px;font-size:20px;font-weight:900}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:12px}.item{display:flex;justify-content:space-between;gap:12px;background:white;color:#291a13;border:1px solid #eed8c5;border-radius:14px;padding:14px;box-shadow:0 3px 12px #6e34100b}.item h3{font-size:15px;margin:0 0 5px;line-height:1.3}.item p{font-size:12px;line-height:1.4;color:#765e50;margin:0}.price{font-weight:900;color:#d64d10;white-space:nowrap}.add{display:flex;align-items:center;gap:8px;margin-top:10px}.add button,.qty button{border:0;border-radius:8px;background:#fbe4d3;color:#8c3107;font-size:18px;font-weight:900;width:29px;height:29px;cursor:pointer}.qty{display:flex;align-items:center;gap:8px;font-weight:800}.cart{position:sticky;bottom:10px;margin-top:22px;background:#25120d;color:white;border:1px solid #6b3d2a;border-radius:17px;padding:16px;box-shadow:0 10px 28px #0003}.cart h2{font-size:19px;margin:0 0 10px}.cartline{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:5px 0}.total{display:flex;justify-content:space-between;border-top:1px solid #684434;padding-top:12px;margin-top:8px;font-size:18px;font-weight:900}.checkout{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:13px}.checkout label{font-size:12px;color:#f3cdb6;display:block;margin-bottom:5px}.checkout select,.checkout input{width:100%;padding:11px;border:1px solid #78513d;border-radius:9px;background:#fff;color:#241812;font:inherit}.place{grid-column:1/-1;border:0;border-radius:10px;background:var(--site-primary);color:white;font:inherit;font-weight:900;padding:13px;cursor:pointer}.note{font-size:11px;color:#e8c7b2;line-height:1.5;margin-top:10px}.empty{font-size:13px;color:#e8c7b2}.footer{text-align:center;font-size:12px;color:#795a49;margin:20px 0 5px}.hidden{display:none!important}@media(min-width:720px){.hero{padding:34px 20px}.wrap{padding:22px 20px 40px}.cart{max-width:760px;margin-left:auto;margin-right:auto}}
-</style></head>
+</style></head></style>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
 <body><main id="app"><header class="hero"><div class="eyebrow">Freshly prepared • Homemade sauces</div><h1>ARABIAN BITES</h1><div class="time">⏱ Preparation time: 20–25 minutes</div><p style="font-size:12px;margin-top:12px">Choose your favourites • Add to cart • Select payment</p></header>
 <div class="wrap"><input id="search" class="search" placeholder="Search shawarma, fries, shakes…" aria-label="Search menu"><nav class="tabs" id="tabs"></nav><div id="menu"></div>
 <section class="cart" id="cart"><h2>🛒 Your Order</h2><div id="cartlines" class="empty">Your cart is empty. Add an item from the menu.</div><div class="total"><span>Total</span><span id="total">₹0</span></div><div class="checkout"><div><label for="payment">Payment method</label><select id="payment"><option value="UPI">UPI</option><option value="Cash">Cash at counter</option></select></div><div><label for="customer">Name (optional)</label><input id="customer" placeholder="Your name"></div><button class="place" id="place">Send Order on WhatsApp</button></div><div class="note">UPI ID: 8106061091@axl. Send the order on WhatsApp, then pay manually using your UPI app. Automatic payment verification is not active until a payment gateway and secure backend are connected.</div><div id="confirmation" aria-live="polite"></div></section><div class="footer">ARABIAN BITES · Thanks for ordering!</div></div></main>
@@ -25,5 +27,144 @@ function renderTabs(){tabs.innerHTML=cats.map(c=>`<button class="tab ${c===activ
 function renderMenu(){const q=search.value.toLowerCase();const filtered=items.filter(x=>(active==='All Menu'||x[0]===active)&&(x[1]+' '+x[3]+' '+x[0]).toLowerCase().includes(q));const groups={};filtered.forEach(x=>(groups[x[0]]??=[]).push(x));menu.innerHTML=Object.entries(groups).map(([cat,rows])=>`<section><h2 class="section-title">${cat}</h2><div class="grid">${rows.map(x=>{let id=items.indexOf(x),n=cart[id]||0;return `<article class="item"><div><h3>${x[1]}</h3>${x[3]?`<p>${x[3]}</p>`:''}<div class="add">${n?`<div class="qty"><button data-dec="${id}" aria-label="Remove one">−</button><span>${n}</span><button data-inc="${id}" aria-label="Add one">+</button></div>`:`<button data-inc="${id}" aria-label="Add ${x[1]}">+</button><small>Add to order</small>`}</div></div><div class="price">₹${x[2]}</div></article>`}).join('')}</div></section>`).join('')||'<p>No menu items found.</p>';menu.querySelectorAll('[data-inc]').forEach(b=>b.onclick=()=>change(+b.dataset.inc,1));menu.querySelectorAll('[data-dec]').forEach(b=>b.onclick=()=>change(+b.dataset.dec,-1))}
 function change(id,d){cart[id]=(cart[id]||0)+d;if(cart[id]<=0)delete cart[id];renderMenu();renderCart()}
 function renderCart(){const entries=Object.entries(cart);document.getElementById('cartlines').className=entries.length?'':'empty';document.getElementById('cartlines').innerHTML=entries.length?entries.map(([id,n])=>`<div class="cartline"><span>${items[id][1]} × ${n}</span><strong>₹${items[id][2]*n}</strong></div>`).join(''):'Your cart is empty. Add an item from the menu.';document.getElementById('total').textContent='₹'+entries.reduce((s,[id,n])=>s+items[id][2]*n,0);document.getElementById('confirmation').textContent=''}
-search.addEventListener('input',renderMenu);document.getElementById('place').onclick=()=>{const entries=Object.entries(cart);const msg=document.getElementById('confirmation');if(!entries.length){msg.textContent='Please add at least one item first.';return}const lines=entries.map(([id,n])=>`${items[id][1]} × ${n} = ₹${items[id][2]*n}`).join('\n');const phone='918106061091';const order=`ARABIAN BITES ORDER\n${document.getElementById('customer').value.trim()?`Name: ${document.getElementById('customer').value.trim()}\n`:''}${lines}\nTotal: ${document.getElementById('total').textContent}\nPayment preference: ${document.getElementById('payment').value}\nPreparation time: 20–25 minutes`;window.open('https://wa.me/'+phone+'?text='+encodeURIComponent(order),'_blank','noopener');msg.textContent='WhatsApp opened with the order details. Customer must press Send to submit the order.'};renderTabs();renderMenu();renderCart();
+
+search.addEventListener('input', renderMenu);
+
+document.getElementById('place').onclick = async () => {
+  const entries = Object.entries(cart);
+  const msg = document.getElementById('confirmation');
+  const button = document.getElementById('place');
+  const customerName = document.getElementById('customer').value.trim();
+  const paymentMethod = document.getElementById('payment').value;
+
+  if (!entries.length) {
+    msg.textContent = 'Please add at least one item first.';
+    return;
+  }
+
+  const lines = entries.map(([id, n]) =>
+    `${items[id][1]} × ${n} = ₹${items[id][2] * n}`
+  ).join('\n');
+
+  const total = document.getElementById('total').textContent;
+  const orderMessage =
+    `ARABIAN BITES ORDER\n` +
+    (customerName ? `Name: ${customerName}\n` : '') +
+    `${lines}\nTotal: ${total}\n` +
+    `Payment: ${paymentMethod}\n` +
+    `Preparation time: 20–25 minutes`;
+
+  const whatsappUrl = 'https://wa.me/918106061091?text=' +
+    encodeURIComponent(orderMessage);
+
+  if (paymentMethod === 'Cash') {
+    window.open(whatsappUrl, '_blank');
+    msg.textContent = 'WhatsApp opened. Press Send to submit your order.';
+    return;
+  }
+
+  button.disabled = true;
+  msg.textContent = 'Creating secure payment order...';
+
+  try {
+    const response = await fetch('/.netlify/functions/create-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        items: entries.map(([id, quantity]) => ({
+          id: Number(id),
+          quantity: Number(quantity)
+        }))
+      })
+    });
+
+    const order = await response.json();
+
+    if (!response.ok) {
+      throw new Error(order.error || 'Could not create payment order.');
+    }
+
+    const checkout = new Razorpay({
+      key: order.keyId,
+      amount: order.amount,
+      currency: order.currency,
+      name: 'Arabian Bites',
+      description: 'Food order',
+      order_id: order.orderId,
+      prefill: { name: customerName },
+      theme: { color: '#e85b16' },
+
+      handler: async function (payment) {
+        msg.textContent = 'Verifying payment...';
+
+        try {
+          const verifyResponse = await fetch(
+            '/.netlify/functions/verify-payment',
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: payment.razorpay_order_id,
+                razorpay_payment_id: payment.razorpay_payment_id,
+                razorpay_signature: payment.razorpay_signature
+              })
+            }
+          );
+
+          const result = await verifyResponse.json();
+
+          if (!verifyResponse.ok || !result.verified) {
+            throw new Error('Payment verification failed.');
+          }
+
+          msg.textContent =
+            'Payment signature verified. Payment ID: ' +
+            payment.razorpay_payment_id +
+            '. Send your order on WhatsApp to notify the kitchen.';
+
+          const link = document.createElement('a');
+          link.href = whatsappUrl;
+          link.target = '_blank';
+          link.rel = 'noopener';
+          link.textContent = 'Send order on WhatsApp';
+          link.style.display = 'inline-block';
+          link.style.marginTop = '10px';
+          link.style.color = '#ffbd78';
+          msg.appendChild(document.createElement('br'));
+          msg.appendChild(link);
+        } catch (error) {
+          msg.textContent = error.message ||
+            'Could not verify payment. Please contact the restaurant.';
+        } finally {
+          button.disabled = false;
+        }
+      },
+
+      modal: {
+        ondismiss: function () {
+          msg.textContent =
+            'Checkout closed. If you completed a payment, check its status before trying again.';
+          button.disabled = false;
+        }
+      }
+    });
+
+    checkout.on('payment.failed', function () {
+      msg.textContent =
+        'Payment failed. Please check the payment status before retrying.';
+      button.disabled = false;
+    });
+
+    checkout.open();
+  } catch (error) {
+    msg.textContent = error.message ||
+      'Unable to start payment. Please try again.';
+    button.disabled = false;
+  }
+};
+
+renderTabs();
+renderMenu();
+renderCart();
+
 </script></body></html>
