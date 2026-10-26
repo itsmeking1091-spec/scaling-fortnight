@@ -1,8 +1,15 @@
+
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: { "Content-Type": "application/json" }
   });
+}
+
+function authHeader(env) {
+  return "Basic " + btoa(
+    env.RAZORPAY_KEY_ID + ":" + env.RAZORPAY_KEY_SECRET
+  );
 }
 
 async function hmacSha256(secret, message) {
@@ -15,9 +22,7 @@ async function hmacSha256(secret, message) {
   );
 
   const signature = await crypto.subtle.sign(
-    "HMAC",
-    key,
-    new TextEncoder().encode(message)
+    "HMAC", key, new TextEncoder().encode(message)
   );
 
   return Array.from(new Uint8Array(signature))
@@ -26,7 +31,9 @@ async function hmacSha256(secret, message) {
 }
 
 function safeEqual(a, b) {
-  if (a.length !== b.length) return false;
+  if (typeof a !== "string" || typeof b !== "string" ||
+      a.length !== b.length) return false;
+
   let result = 0;
   for (let i = 0; i < a.length; i++) {
     result |= a.charCodeAt(i) ^ b.charCodeAt(i);
@@ -34,25 +41,47 @@ function safeEqual(a, b) {
   return result === 0;
 }
 
+async function razorpayGet(env, path) {
+  const response = await fetch(
+    "https://api.razorpay.com/v1" + path,
+    { headers: { Authorization: authHeader(env) } }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error("Razorpay API request failed");
+  }
+
+  return data;
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    if (url.pathname === "/api/create-order") {
+    if (url.pathname.startsWith("/api/") && !env.ASSETS) {
+      return json({ error: "Site assets are not configured" }, 500);
+    }
+
+    if (url.pathname.startsWith("/api/")) {
       if (request.method !== "POST") {
         return json({ error: "POST required" }, 405);
       }
 
+      if (!env.RAZORPAY_KEY_ID || !env.RAZORPAY_KEY_SECRET) {
+        return json({ error: "Payment configuration missing" }, 500);
+      }
+    }
+
+    if (url.pathname === "/api/create-order") {
       try {
         const body = await request.json();
         const amount = Number(body.amount);
 
-        if (!Number.isSafeInteger(amount) || amount < 100 || amount > 1000000) {
+        if (!Number.isSafeInteger(amount) ||
+            amount < 100 || amount > 1000000) {
           return json({ error: "Invalid amount" }, 400);
-        }
-
-        if (!env.RAZORPAY_KEY_ID || !env.RAZORPAY_KEY_SECRET) {
-          return json({ error: "Payment configuration missing" }, 500);
         }
 
         const response = await fetch(
@@ -60,15 +89,14 @@ export default {
           {
             method: "POST",
             headers: {
-              "Authorization": "Basic " + btoa(
-                env.RAZORPAY_KEY_ID + ":" + env.RAZORPAY_KEY_SECRET
-              ),
+              Authorization: authHeader(env),
               "Content-Type": "application/json"
             },
             body: JSON.stringify({
               amount,
               currency: "INR",
-              receipt: "ab_" + crypto.randomUUID().replace(/-/g, "").slice(0, 20)
+              receipt: "ab_" +
+                crypto.randomUUID().replace(/-/g, "").slice(0, 20)
             })
           }
         );
@@ -76,7 +104,9 @@ export default {
         const result = await response.json();
 
         if (!response.ok) {
-          return json({ error: "Razorpay could not create the order" }, 502);
+          return json({
+            error: "Razorpay could not create the order"
+          }, 502);
         }
 
         return json({
@@ -91,19 +121,20 @@ export default {
     }
 
     if (url.pathname === "/api/verify-payment") {
-      if (request.method !== "POST") {
-        return json({ error: "POST required" }, 405);
-      }
-
       try {
         const body = await request.json();
-        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = body;
+        const {
+          razorpay_order_id,
+          razorpay_payment_id,
+          razorpay_signature
+        } = body;
 
         if (
           typeof razorpay_order_id !== "string" ||
           typeof razorpay_payment_id !== "string" ||
           typeof razorpay_signature !== "string" ||
-          !env.RAZORPAY_KEY_SECRET
+          !/^order_[A-Za-z0-9]+$/.test(razorpay_order_id) ||
+          !/^pay_[A-Za-z0-9]+$/.test(razorpay_payment_id)
         ) {
           return json({ error: "Invalid payment details" }, 400);
         }
@@ -114,16 +145,57 @@ export default {
         );
 
         if (!safeEqual(expected, razorpay_signature)) {
-          return json({ verified: false, error: "Signature verification failed" }, 400);
+          return json({
+            verified: false,
+            error: "Signature verification failed"
+          }, 400);
+        }
+
+        // Fetch the actual order and payment from Razorpay.
+        const [order, payment] = await Promise.all([
+          razorpayGet(env, "/orders/" +
+            encodeURIComponent(razorpay_order_id)),
+          razorpayGet(env, "/payments/" +
+            encodeURIComponent(razorpay_payment_id))
+        ]);
+
+        // Confirm this payment belongs to this order.
+        if (
+          payment.order_id !== order.id ||
+          order.id !== razorpay_order_id
+        ) {
+          return json({
+            verified: false,
+            error: "Payment/order mismatch"
+          }, 400);
+        }
+
+        // Only confirm fully captured payments.
+        if (
+          payment.status !== "captured" ||
+          payment.amount !== order.amount ||
+          payment.currency !== order.currency ||
+          order.currency !== "INR"
+        ) {
+          return json({
+            verified: false,
+            error: "Payment is not captured or amount does not match"
+          }, 400);
         }
 
         return json({
           verified: true,
-          razorpay_order_id,
-          razorpay_payment_id
+          status: payment.status,
+          amount: payment.amount,
+          currency: payment.currency,
+          razorpay_order_id: order.id,
+          razorpay_payment_id: payment.id
         });
       } catch {
-        return json({ error: "Unable to verify payment" }, 400);
+        return json({
+          verified: false,
+          error: "Unable to verify payment with Razorpay"
+        }, 502);
       }
     }
 
