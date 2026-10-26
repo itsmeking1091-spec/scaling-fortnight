@@ -1,4 +1,99 @@
 
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Arabian Bites | Digital Menu</title>
+<style>
+:root{--primary:#e85b16;--dark:#25120d;--bg:#fff8f0}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:#241812}
+.hero{background:var(--dark);color:white;padding:28px 16px;text-align:center;border-bottom:5px solid var(--primary)}
+.eyebrow{font-size:12px;letter-spacing:2px;color:#ffbd78;font-weight:800;text-transform:uppercase}
+h1{font-size:clamp(28px,5vw,42px);margin:10px 0}
+.hero p{color:#f9dfce}
+.time{display:inline-block;border:1px solid #a95a2d;border-radius:25px;padding:9px 14px;margin-top:8px;font-size:13px}
+.wrap{max-width:1050px;margin:auto;padding:18px 14px 40px}
+.search{width:100%;padding:13px;border:1px solid #dfc5b0;border-radius:12px;font:inherit;margin-bottom:14px;background:white}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:12px}
+.tab{border:1px solid #e4cbb8;background:white;color:#4b2b1c;border-radius:24px;padding:9px 14px;white-space:nowrap;font-weight:750;cursor:pointer}
+.tab.active{background:var(--primary);color:white}
+.section-title{margin:18px 0 10px;font-size:20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.item{display:flex;justify-content:space-between;gap:12px;background:white;color:#291a13;border:1px solid #eed8c5;border-radius:14px;padding:14px}
+.item h3{font-size:15px;margin:0 0 5px}
+.item p{font-size:12px;color:#765e50;margin:0}
+.price{font-weight:900;color:#d64d10;white-space:nowrap}
+.add{display:flex;align-items:center;gap:8px;margin-top:10px}
+.add button,.qty button{border:0;border-radius:8px;background:#fbe4d3;color:#8c3107;font-size:18px;font-weight:900;width:30px;height:30px;cursor:pointer}
+.qty{display:flex;align-items:center;gap:8px;font-weight:800}
+.cart{margin-top:24px;background:var(--dark);color:white;border:1px solid #6b3d2a;border-radius:17px;padding:16px;box-shadow:0 10px 28px #0002}
+.cart h2{font-size:19px;margin:0 0 10px}
+.cartline{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:6px 0}
+.total{display:flex;justify-content:space-between;border-top:1px solid #684434;padding-top:12px;margin-top:8px;font-size:18px;font-weight:900}
+.checkout{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:13px}
+.checkout label{font-size:12px;color:#f3cdb6;display:block;margin-bottom:5px}
+.checkout select,.checkout input{width:100%;padding:11px;border:1px solid #78513d;border-radius:9px;background:white;color:#241812;font:inherit}
+.place{grid-column:1/-1;border:0;border-radius:10px;background:var(--primary);color:white;font:inherit;font-weight:900;padding:14px;cursor:pointer}
+.place:disabled{opacity:.6;cursor:wait}
+.note{font-size:12px;color:#e8c7b2;line-height:1.6;margin-top:12px}
+.empty{font-size:13px;color:#e8c7b2}
+#confirmation{font-size:13px;line-height:1.6;margin-top:12px;white-space:pre-line;overflow-wrap:anywhere}
+.footer{text-align:center;font-size:12px;color:#795a49;margin:22px 0 5px}
+@media(min-width:720px){.hero{padding:34px 20px}.wrap{padding:22px 20px 40px}.cart{max-width:760px;margin-left:auto;margin-right:auto}}
+</style>
+</head>
+<body>
+<main>
+<header class="hero">
+<div class="eyebrow">Freshly prepared • Homemade sauces</div>
+<h1>ARABIAN BITES</h1>
+<div class="time">⏱ Preparation time: 20–25 minutes</div>
+<p>Choose your favourites • Add to cart • Place your order</p>
+</header>
+
+<div class="wrap">
+<input id="search" class="search" placeholder="Search shawarma, fries, shakes…" aria-label="Search menu">
+<nav class="tabs" id="tabs"></nav>
+<div id="menu"></div>
+
+<section class="cart">
+<h2>🛒 Your Order</h2>
+<div id="cartlines" class="empty">Your cart is empty. Add an item from the menu.</div>
+<div class="total"><span>Total</span><span id="total">₹0</span></div>
+
+<div class="checkout">
+<div>
+<label for="payment">Payment method</label>
+<select id="payment">
+<option value="UPI">UPI (manual payment)</option>
+<option value="Cash">Cash at counter</option>
+</select>
+</div>
+<div>
+<label for="customer">Name (optional)</label>
+<input id="customer" maxlength="80" placeholder="Your name">
+</div>
+<button class="place" id="place" type="button">Send Order on WhatsApp</button>
+</div>
+
+<div class="note">
+Preparation time: 20–25 minutes.<br>
+UPI ID: <strong>8106061091@axl</strong><br>
+For UPI orders, pay manually through your UPI app. Automatic payment verification is not enabled. Please confirm payment before preparing the order.
+</div>
+<div id="confirmation" aria-live="polite"></div>
+</section>
+<div class="footer">ARABIAN BITES · Thanks for ordering!</div>
+</div>
+</main>
+
+<script>
+'use strict';
+
+const WHATSAPP_PHONE = '918106061091';
+
 const items = [
 ['Exotic Chicken Shawarma','Chicken Shawarma with Salad',100,'Fresh chicken, homemade mayo, cucumber & lettuce'],
 ['Exotic Chicken Shawarma','Special Chicken Shawarma',110,'Classic shawarma with signature homemade mayo'],
@@ -43,258 +138,175 @@ const items = [
 ['Thick Shakes','Strawberry Premium Thick Shake',289,'Extra-creamy strawberry treat']
 ];
 
-const cats = ['All Menu', ...new Set(items.map(x => x[0]))];
-let active = 'All Menu';
+const categories = ['All Menu', ...new Set(items.map(item => item[0]))];
 const cart = {};
-const menu = document.getElementById('menu');
-const tabs = document.getElementById('tabs');
-const search = document.getElementById('search');
-const msg = document.getElementById('confirmation');
-const button = document.getElementById('place');
+let activeCategory = 'All Menu';
 
-document.querySelector('.note').textContent =
-  'Preparation time: 20–25 minutes. UPI payments use Razorpay when the secure backend is configured. Cash orders can be sent directly to WhatsApp.';
+const menuEl = document.getElementById('menu');
+const tabsEl = document.getElementById('tabs');
+const searchEl = document.getElementById('search');
+const cartLinesEl = document.getElementById('cartlines');
+const totalEl = document.getElementById('total');
+const messageEl = document.getElementById('confirmation');
+const placeButton = document.getElementById('place');
 
 function renderTabs() {
-  tabs.innerHTML = cats.map(c =>
-    `<button class="tab ${c === active ? 'active' : ''}" data-cat="${c}">${c}</button>`
+  tabsEl.innerHTML = categories.map(category =>
+    `<button type="button" class="tab ${category === activeCategory ? 'active' : ''}" data-category="${category}">${category}</button>`
   ).join('');
 
-  tabs.querySelectorAll('button').forEach(b => {
-    b.onclick = () => {
-      active = b.dataset.cat;
+  tabsEl.querySelectorAll('[data-category]').forEach(button => {
+    button.addEventListener('click', () => {
+      activeCategory = button.dataset.category;
       renderTabs();
       renderMenu();
-    };
+    });
   });
 }
 
 function renderMenu() {
-  const q = search.value.toLowerCase();
-  const filtered = items.filter(x =>
-    (active === 'All Menu' || x[0] === active) &&
-    (x[1] + ' ' + x[3] + ' ' + x[0]).toLowerCase().includes(q)
+  const query = searchEl.value.trim().toLowerCase();
+
+  const filtered = items.filter(item =>
+    (activeCategory === 'All Menu' || item[0] === activeCategory) &&
+    (item[0] + ' ' + item[1] + ' ' + item[3]).toLowerCase().includes(query)
   );
 
   const groups = {};
-  filtered.forEach(x => (groups[x[0]] ??= []).push(x));
+  filtered.forEach(item => {
+    if (!groups[item[0]]) groups[item[0]] = [];
+    groups[item[0]].push(item);
+  });
 
-  menu.innerHTML = Object.entries(groups).map(([cat, rows]) =>
-    `<section><h2 class="section-title">${cat}</h2><div class="grid">${
-      rows.map(x => {
-        const id = items.indexOf(x);
-        const n = cart[id] || 0;
-        return `<article class="item"><div><h3>${x[1]}</h3>
-          ${x[3] ? `<p>${x[3]}</p>` : ''}
-          <div class="add">${n
-            ? `<div class="qty"><button data-dec="${id}">−</button><span>${n}</span><button data-inc="${id}">+</button></div>`
-            : `<button data-inc="${id}" aria-label="Add ${x[1]}">+</button><small>Add to order</small>`
-          }</div></div><div class="price">₹${x[2]}</div></article>`;
+  menuEl.innerHTML = Object.entries(groups).map(([category, rows]) =>
+    `<section><h2 class="section-title">${category}</h2><div class="grid">${
+      rows.map(item => {
+        const id = items.indexOf(item);
+        const quantity = cart[id] || 0;
+
+        return `<article class="item">
+          <div>
+            <h3>${item[1]}</h3>
+            ${item[3] ? `<p>${item[3]}</p>` : ''}
+            <div class="add">
+              ${quantity
+                ? `<div class="qty">
+                    <button type="button" data-dec="${id}" aria-label="Remove one ${item[1]}">−</button>
+                    <span>${quantity}</span>
+                    <button type="button" data-inc="${id}" aria-label="Add one ${item[1]}">+</button>
+                   </div>`
+                : `<button type="button" data-inc="${id}" aria-label="Add ${item[1]}">+</button><small>Add to order</small>`
+              }
+            </div>
+          </div>
+          <div class="price">₹${item[2]}</div>
+        </article>`;
       }).join('')
     }</div></section>`
   ).join('') || '<p>No menu items found.</p>';
 
-  menu.querySelectorAll('[data-inc]').forEach(b =>
-    b.onclick = () => change(Number(b.dataset.inc), 1)
-  );
-  menu.querySelectorAll('[data-dec]').forEach(b =>
-    b.onclick = () => change(Number(b.dataset.dec), -1)
-  );
+  menuEl.querySelectorAll('[data-inc]').forEach(button => {
+    button.addEventListener('click', () => changeQuantity(Number(button.dataset.inc), 1));
+  });
+
+  menuEl.querySelectorAll('[data-dec]').forEach(button => {
+    button.addEventListener('click', () => changeQuantity(Number(button.dataset.dec), -1));
+  });
 }
 
-function change(id, d) {
-  cart[id] = (cart[id] || 0) + d;
+function changeQuantity(id, difference) {
+  cart[id] = (cart[id] || 0) + difference;
   if (cart[id] <= 0) delete cart[id];
+
   renderMenu();
   renderCart();
 }
 
+function getTotal() {
+  return Object.entries(cart).reduce(
+    (sum, [id, quantity]) => sum + items[Number(id)][2] * quantity,
+    0
+  );
+}
+
 function renderCart() {
   const entries = Object.entries(cart);
-  const lines = document.getElementById('cartlines');
 
-  lines.className = entries.length ? '' : 'empty';
-  lines.innerHTML = entries.length
-    ? entries.map(([id, n]) =>
-        `<div class="cartline"><span>${items[id][1]} × ${n}</span><strong>₹${items[id][2] * n}</strong></div>`
+  cartLinesEl.className = entries.length ? '' : 'empty';
+  cartLinesEl.innerHTML = entries.length
+    ? entries.map(([id, quantity]) =>
+        `<div class="cartline">
+          <span>${items[Number(id)][1]} × ${quantity}</span>
+          <strong>₹${items[Number(id)][2] * quantity}</strong>
+        </div>`
       ).join('')
     : 'Your cart is empty. Add an item from the menu.';
 
-  const total = entries.reduce((s, [id, n]) => s + items[id][2] * n, 0);
-  document.getElementById('total').textContent = '₹' + total;
-  msg.textContent = '';
+  totalEl.textContent = '₹' + getTotal();
+  messageEl.textContent = '';
 }
 
-search.addEventListener('input', renderMenu);
-
-async function readJson(response) {
-  const text = await response.text();
-
-  if (!text.trim()) {
-    throw new Error(
-      `Server returned an empty response (HTTP ${response.status}). Check the Cloudflare Worker API and its logs.`
-    );
-  }
-
-  try {
-    return JSON.parse(text);
-  } catch {
-    throw new Error(
-      `Server did not return JSON (HTTP ${response.status}). Check the Cloudflare Worker API response.`
-    );
-  }
-}
-
-function getWhatsAppUrl(orderMessage) {
-  return 'https://wa.me/918106061091?text=' +
-    encodeURIComponent(orderMessage);
-}
-
-button.onclick = async () => {
+function makeOrderMessage() {
   const entries = Object.entries(cart);
   const customerName = document.getElementById('customer').value.trim();
   const paymentMethod = document.getElementById('payment').value;
 
-  if (!entries.length) {
-    msg.textContent = 'Please add at least one item first.';
+  const orderLines = entries.map(([id, quantity]) =>
+    `${items[Number(id)][1]} × ${quantity} = ₹${items[Number(id)][2] * quantity}`
+  );
+
+  return [
+    'ARABIAN BITES ORDER',
+    '--------------------',
+    ...(customerName ? [`Customer: ${customerName}`] : []),
+    ...orderLines,
+    '--------------------',
+    `Total: ₹${getTotal()}`,
+    `Payment preference: ${paymentMethod}`,
+    ...(paymentMethod === 'UPI'
+      ? ['UPI ID: 8106061091@axl', 'Payment will be made manually; please confirm with the restaurant.']
+      : ['Payment: Cash at counter']),
+    'Preparation time: 20–25 minutes'
+  ].join('\n');
+}
+
+placeButton.addEventListener('click', () => {
+  if (!Object.keys(cart).length) {
+    messageEl.textContent = 'Please add at least one item first.';
     return;
   }
 
-  const lines = entries.map(([id, n]) =>
-    `${items[id][1]} × ${n} = ₹${items[id][2] * n}`
-  ).join('\n');
+  const orderMessage = makeOrderMessage();
+  const whatsappUrl =
+    `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(orderMessage)}`;
 
-  const total = entries.reduce((s, [id, n]) => s + items[id][2] * n, 0);
+  // Open WhatsApp directly. No empty API response or JSON parsing is involved.
+  const whatsappWindow = window.open(whatsappUrl, '_blank');
 
-  const orderMessage =
-    `ARABIAN BITES ORDER\n` +
-    (customerName ? `Name: ${customerName}\n` : '') +
-    `${lines}\nTotal: ₹${total}\n` +
-    `Payment: ${paymentMethod}\n` +
-    `Preparation time: 20–25 minutes`;
-
-  const whatsappUrl = getWhatsAppUrl(orderMessage);
-
-  // Cash orders go straight to WhatsApp; no payment API is called.
-  if (paymentMethod === 'Cash') {
-    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-    msg.textContent = 'WhatsApp opened. Press Send to submit your order.';
-    return;
+  if (whatsappWindow) {
+    messageEl.textContent =
+      'WhatsApp opened with your order details. Press Send in WhatsApp to submit your order.';
+  } else {
+    messageEl.textContent =
+      'Your browser blocked the WhatsApp window. Use the link below to continue.';
+    const link = document.createElement('a');
+    link.href = whatsappUrl;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.textContent = 'Open WhatsApp order';
+    link.style.color = '#ffbd78';
+    link.style.display = 'inline-block';
+    link.style.marginTop = '8px';
+    messageEl.appendChild(document.createElement('br'));
+    messageEl.appendChild(link);
   }
+});
 
-  button.disabled = true;
-  msg.textContent = 'Creating secure payment order...';
-
-  try {
-    // Cloudflare Worker endpoint, not the old Netlify function URL.
-    const response = await fetch('/api/create-order', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        items: entries.map(([id, quantity]) => ({
-          id: Number(id),
-          quantity: Number(quantity)
-        }))
-      })
-    });
-
-    const order = await readJson(response);
-
-    if (!response.ok) {
-      throw new Error(order.error || 'Could not create payment order.');
-    }
-
-    // Accept either snake_case or camelCase response fields.
-    const keyId = order.key_id || order.keyId;
-    const orderId = order.order_id || order.orderId;
-    const amount = order.amount;
-    const currency = order.currency || 'INR';
-
-    if (!keyId || !orderId || !amount) {
-      throw new Error(
-        'Payment API response is missing key_id, order_id or amount. Check worker.js.'
-      );
-    }
-
-    if (typeof Razorpay === 'undefined') {
-      throw new Error('Razorpay checkout failed to load. Refresh and try again.');
-    }
-
-    const checkout = new Razorpay({
-      key: keyId,
-      amount,
-      currency,
-      name: 'Arabian Bites',
-      description: 'Food order',
-      order_id: orderId,
-      prefill: { name: customerName },
-      theme: { color: '#e85b16' },
-
-      handler: async function (payment) {
-        msg.textContent = 'Verifying payment...';
-
-        try {
-          const verifyResponse = await fetch('/api/verify-payment', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              razorpay_order_id: payment.razorpay_order_id,
-              razorpay_payment_id: payment.razorpay_payment_id,
-              razorpay_signature: payment.razorpay_signature
-            })
-          });
-
-          const result = await readJson(verifyResponse);
-
-          if (!verifyResponse.ok || result.verified !== true) {
-            throw new Error(result.error || 'Payment verification failed.');
-          }
-
-          msg.textContent =
-            'Payment verified. Click below to send your order to the kitchen. ';
-
-          const link = document.createElement('a');
-          link.href = whatsappUrl;
-          link.target = '_blank';
-          link.rel = 'noopener noreferrer';
-          link.textContent = 'Send order on WhatsApp';
-          link.style.display = 'inline-block';
-          link.style.marginTop = '10px';
-          link.style.color = '#ffbd78';
-
-          msg.appendChild(document.createElement('br'));
-          msg.appendChild(link);
-        } catch (error) {
-          msg.textContent = error.message ||
-            'Could not verify payment. Contact the restaurant before retrying.';
-        } finally {
-          button.disabled = false;
-        }
-      },
-
-      modal: {
-        ondismiss: function () {
-          msg.textContent =
-            'Checkout closed. If you completed payment, check its status before retrying.';
-          button.disabled = false;
-        }
-      }
-    });
-
-    checkout.on('payment.failed', function () {
-      msg.textContent =
-        'Payment failed. Check the payment status before retrying.';
-      button.disabled = false;
-    });
-
-    checkout.open();
-  } catch (error) {
-    msg.textContent = error.message ||
-      'Unable to start payment. Please try again.';
-    button.disabled = false;
-  }
-};
+searchEl.addEventListener('input', renderMenu);
 
 renderTabs();
 renderMenu();
 renderCart();
+</script>
+</body>
+</html>
