@@ -1,11 +1,6 @@
-
-{
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "scaling-fortnight",
-  "main": "worker.js",
-  "compatibility_date": "2026-10-19",
-  "assets": {
-    "directory": "./public",
-    "binding": "ASSETS"
-  }
+"assets": {
+  "directory": ".",
+  "binding": "ASSETS",
+  "run_worker_first": true,
+  "not_found_handling": "single-page-application"
 }
