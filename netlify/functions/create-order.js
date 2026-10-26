@@ -11,33 +11,60 @@ const prices = [
 ];
 
 exports.handler = async (event) => {
+  const headers = {
+    "Content-Type": "application/json"
+  };
+
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ error: "Method not allowed" })
+      headers,
+      body: JSON.stringify({
+        error: "Method not allowed"
+      })
     };
   }
 
   try {
-    if (
-      !process.env.RAZORPAY_KEY_ID ||
-      !process.env.RAZORPAY_KEY_SECRET
-    ) {
-      console.error("Razorpay environment variables are missing");
+    const keyId = process.env.RAZORPAY_KEY_ID;
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+
+    if (!keyId || !keySecret) {
+      console.error("Razorpay configuration is missing", {
+        keyIdPresent: Boolean(keyId),
+        keySecretPresent: Boolean(keySecret)
+      });
 
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: "Payment configuration missing" })
+        headers,
+        body: JSON.stringify({
+          error: "Payment configuration missing"
+        })
       };
     }
 
-    const body = JSON.parse(event.body || "{}");
+    let body;
+
+    try {
+      body = JSON.parse(event.body || "{}");
+    } catch {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({
+          error: "Invalid request body"
+        })
+      };
+    }
 
     if (!Array.isArray(body.items) || body.items.length === 0) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: "Please add items to your order" })
+        headers,
+        body: JSON.stringify({
+          error: "Please add items to your order"
+        })
       };
     }
 
@@ -57,7 +84,10 @@ exports.handler = async (event) => {
       ) {
         return {
           statusCode: 400,
-          body: JSON.stringify({ error: "Invalid menu item or quantity" })
+          headers,
+          body: JSON.stringify({
+            error: "Invalid menu item or quantity"
+          })
         };
       }
 
@@ -67,13 +97,16 @@ exports.handler = async (event) => {
     if (!Number.isSafeInteger(total) || total <= 0) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: "Invalid order total" })
+        headers,
+        body: JSON.stringify({
+          error: "Invalid order total"
+        })
       };
     }
 
     const razorpay = new Razorpay({
-      key_id: process.env.RAZORPAY_KEY_ID,
-      key_secret: process.env.RAZORPAY_KEY_SECRET
+      key_id: keyId,
+      key_secret: keySecret
     });
 
     const order = await razorpay.orders.create({
@@ -84,26 +117,29 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 200,
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({
         orderId: order.id,
         amount: order.amount,
         currency: order.currency,
-        keyId: process.env.RAZORPAY_KEY_ID
+        keyId
       })
     };
-  console.error("Order creation failed:", {
-  message: error?.message,
-  statusCode: error?.statusCode,
-  error: error?.error,
-  description: error?.description,
-  stack: error?.stack
-});
+  } catch (error) {
+    console.error("Order creation failed:", {
+      message: error?.message || String(error),
+      statusCode: error?.statusCode,
+      description: error?.error?.description,
+      code: error?.error?.code,
+      stack: error?.stack
+    });
 
     return {
       statusCode: 500,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ error: "Unable to create payment order" })
+      headers,
+      body: JSON.stringify({
+        error: "Unable to create payment order"
+      })
     };
   }
 };
