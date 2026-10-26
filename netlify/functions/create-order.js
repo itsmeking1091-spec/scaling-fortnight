@@ -92,8 +92,13 @@ exports.handler = async (event) => {
         keyId: process.env.RAZORPAY_KEY_ID
       })
     };
-  } catch (error) {
-    console.error("Order creation failed:", error.message);
+  console.error("Order creation failed:", {
+  message: error?.message,
+  statusCode: error?.statusCode,
+  error: error?.error,
+  description: error?.description,
+  stack: error?.stack
+});
 
     return {
       statusCode: 500,
