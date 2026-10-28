@@ -385,33 +385,6 @@ placeButton.addEventListener('click', async () => {
     placeButton.disabled = false;
   }
 });
-  }
-
-  const orderMessage = makeOrderMessage();
-  const whatsappUrl =
-    `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(orderMessage)}`;
-
-  // Open WhatsApp directly. No empty API response or JSON parsing is involved.
-  const whatsappWindow = window.open(whatsappUrl, '_blank');
-
-  if (whatsappWindow) {
-    messageEl.textContent =
-      'WhatsApp opened with your order details. Press Send in WhatsApp to submit your order.';
-  } else {
-    messageEl.textContent =
-      'Your browser blocked the WhatsApp window. Use the link below to continue.';
-    const link = document.createElement('a');
-    link.href = whatsappUrl;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    link.textContent = 'Open WhatsApp order';
-    link.style.color = '#ffbd78';
-    link.style.display = 'inline-block';
-    link.style.marginTop = '8px';
-    messageEl.appendChild(document.createElement('br'));
-    messageEl.appendChild(link);
-  }
-});
 
 searchEl.addEventListener('input', renderMenu);
 
