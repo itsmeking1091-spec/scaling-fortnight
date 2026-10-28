@@ -264,9 +264,7 @@ function makeOrderMessage() {
     '--------------------',
     `Total: ₹${getTotal()}`,
     `Payment preference: ${paymentMethod}`,
-    ...(paymentMethod === 'UPI'
-      ? ['UPI ID: 8106061091@axl', 'Payment will be made manually; please confirm with the restaurant.']
-      : ['Payment: Cash at counter']),
+   ...(paymentMethod === 'Cash' ? ['Payment: Cash at counter'] : []),
     'Preparation time: 20–25 minutes'
   ].join('\n');
 }
