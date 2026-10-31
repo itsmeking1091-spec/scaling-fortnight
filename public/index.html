@@ -263,8 +263,7 @@ function makeOrderMessage() {
     ...orderLines,
     '--------------------',
     `Total: ₹${getTotal()}`,
-    `Payment preference: ${paymentMethod}`,
-   ...(paymentMethod === 'Cash' ? ['Payment: Cash at counter'] : []),
+   `Payment option: ${paymentMethod === 'Cash' ? 'Cash at counter' : 'Online (Razorpay)'}`,
     'Preparation time: 20–25 minutes'
   ].join('\n');
 }
