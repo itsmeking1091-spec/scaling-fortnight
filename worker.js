@@ -74,51 +74,89 @@ export default {
       }
     }
 
-    if (url.pathname === "/api/create-order") {
-      try {
-        const body = await request.json();
-        const amount = Number(body.amount);
+   
+if (url.pathname === "/api/create-order") {
+  try {
+    const body = await request.json();
 
-        if (!Number.isSafeInteger(amount) ||
-            amount < 100 || amount > 1000000) {
-          return json({ error: "Invalid amount" }, 400);
-        }
+    const PRODUCT_PRICES = [
+      16900, // Belgium Chocolate Mousse
+      16900, // Biscoff Cheesecake
+      18900, // Blueberry Cheesecake
+      18900, // Raspberry Cheesecake
+      31800, // Duo Delight Combo
+      35800, // Berry Bliss Combo
+      52700, // Classic Trio Combo
+      61300  // MAVIQ Signature Combo
+    ];
 
-        const response = await fetch(
-          "https://api.razorpay.com/v1/orders",
-          {
-            method: "POST",
-            headers: {
-              Authorization: authHeader(env),
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-              amount,
-              currency: "INR",
-              receipt: "ab_" +
-                crypto.randomUUID().replace(/-/g, "").slice(0, 20)
-            })
-          }
-        );
-
-        const result = await response.json();
-
-        if (!response.ok) {
-          return json({
-            error: "Razorpay could not create the order"
-          }, 502);
-        }
-
-        return json({
-          order_id: result.id,
-          amount: result.amount,
-          currency: result.currency,
-          key_id: env.RAZORPAY_KEY_ID
-        });
-      } catch {
-        return json({ error: "Unable to create order" }, 400);
-      }
+    if (!Array.isArray(body.items) ||
+        body.items.length < 1 ||
+        body.items.length > 8) {
+      return json({ error: "Invalid cart items" }, 400);
     }
+
+    let amount = 0;
+    const seen = new Set();
+
+    for (const item of body.items) {
+      const id = item?.id;
+      const quantity = item?.quantity;
+
+      if (!Number.isInteger(id) ||
+          id < 0 || id >= PRODUCT_PRICES.length ||
+          !Number.isInteger(quantity) ||
+          quantity < 1 || quantity > 10 ||
+          seen.has(id)) {
+        return json({ error: "Invalid product or quantity" }, 400);
+      }
+
+      seen.add(id);
+      amount += PRODUCT_PRICES[id] * quantity;
+    }
+
+    if (!Number.isSafeInteger(amount) ||
+        amount < 100 ||
+        amount > 1000000) {
+      return json({ error: "Invalid order total" }, 400);
+    }
+
+    const response = await fetch(
+      "https://api.razorpay.com/v1/orders",
+      {
+        method: "POST",
+        headers: {
+          Authorization: authHeader(env),
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          amount,
+          currency: "INR",
+          receipt: "mav_" +
+            crypto.randomUUID().replace(/-/g, "").slice(0, 20)
+        })
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      return json({
+        error: "Razorpay could not create the order"
+      }, 502);
+    }
+
+    return json({
+      order_id: result.id,
+      amount: result.amount,
+      currency: result.currency,
+      key_id: env.RAZORPAY_KEY_ID
+    });
+  } catch {
+    return json({ error: "Unable to create order" }, 400);
+  }
+}
+
 
     if (url.pathname === "/api/verify-payment") {
       try {
