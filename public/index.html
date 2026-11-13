@@ -1,4 +1,4 @@
-
+```html
 <!doctype html>
 <html lang="en">
 <head>
@@ -55,30 +55,45 @@ body{margin:0;background:#080707;color:#fff7e8;font-family:Georgia,"Times New Ro
   <div class="menu-title">DESSERT TIN MENU</div>
   <p class="hero-note">Premium ingredients • Artisanal recipes • Signature desserts</p>
 </header>
+
 <div class="wrap">
   <input id="search" class="search" placeholder="Search mousse, cheesecake, combos…" aria-label="Search menu">
   <nav class="tabs" id="tabs"></nav>
   <div id="menu"></div>
+
   <section class="cart">
     <h2>🛒 Your MAVIQ Order</h2>
     <div id="cartlines" class="empty">Your cart is empty. Add a dessert tin or combo.</div>
     <div class="total"><span>Total</span><span id="total">₹0</span></div>
+
     <div class="checkout">
-      <div><label for="payment">Payment method</label>
-        <select id="payment"><option value="UPI">Pay Online (Razorpay)</option><option value="Cash">Cash at counter</option></select>
+      <div>
+        <label for="payment">Payment method</label>
+        <select id="payment">
+          <option value="UPI">Pay Online (Razorpay)</option>
+          <option value="Cash">Cash at counter</option>
+        </select>
       </div>
-      <div><label for="customer">Name (optional)</label><input id="customer" maxlength="80" placeholder="Your name"></div>
+      <div>
+        <label for="customer">Name (optional)</label>
+        <input id="customer" maxlength="80" placeholder="Your name">
+      </div>
       <button class="place" id="place" type="button">Place Order on WhatsApp</button>
     </div>
+
     <div class="note">Online payments are securely processed through Razorpay. Your order will be prepared after payment verification. For cash orders, pay at the counter.</div>
     <div id="confirmation" aria-live="polite"></div>
   </section>
+
   <div class="footer">MAVIQ™ · CAKE THAT FIXES YOUR MOOD · THANK YOU</div>
 </div>
 </main>
+
 <script>
 'use strict';
+
 const WHATSAPP_PHONE = '918106061091';
+
 const items = [
   ['Dessert Tins','Belgium Chocolate Mousse',169,'250 ml • Rich Belgian chocolate mousse'],
   ['Dessert Tins','Biscoff Cheesecake',169,'250 ml • Creamy cheesecake with Biscoff'],
@@ -89,60 +104,169 @@ const items = [
   ['Combo Offers','Classic Trio Combo',527,'Any 3 dessert tins • 250 ml each • Save ₹30'],
   ['Combo Offers','MAVIQ Signature Combo',613,'All 4 flavours • 250 ml each • Best value']
 ];
+
 const categories = ['All Menu', ...new Set(items.map(item => item[0]))];
 const cart = {};
 let activeCategory = 'All Menu';
-const menuEl=document.getElementById('menu'),tabsEl=document.getElementById('tabs'),searchEl=document.getElementById('search');
-const cartLinesEl=document.getElementById('cartlines'),totalEl=document.getElementById('total'),messageEl=document.getElementById('confirmation'),placeButton=document.getElementById('place');
 
-function renderTabs(){
-  tabsEl.innerHTML=categories.map(c=>`<button type="button" class="tab ${c===activeCategory?'active':''}" data-category="${c}">${c}</button>`).join('');
-  tabsEl.querySelectorAll('[data-category]').forEach(b=>b.addEventListener('click',()=>{activeCategory=b.dataset.category;renderTabs();renderMenu();}));
+const menuEl = document.getElementById('menu');
+const tabsEl = document.getElementById('tabs');
+const searchEl = document.getElementById('search');
+const cartLinesEl = document.getElementById('cartlines');
+const totalEl = document.getElementById('total');
+const messageEl = document.getElementById('confirmation');
+const placeButton = document.getElementById('place');
+
+function renderTabs() {
+  tabsEl.innerHTML = categories.map(c =>
+    `<button type="button" class="tab ${c === activeCategory ? 'active' : ''}" data-category="${c}">${c}</button>`
+  ).join('');
+
+  tabsEl.querySelectorAll('[data-category]').forEach(b =>
+    b.addEventListener('click', () => {
+      activeCategory = b.dataset.category;
+      renderTabs();
+      renderMenu();
+    })
+  );
 }
 
-function renderMenu(){
-  const q=searchEl.value.trim().toLowerCase();
-  const filtered=items.filter(i=>(activeCategory==='All Menu'||i[0]===activeCategory)&&(i.join(' ').toLowerCase().includes(q)));
-  const groups={};filtered.forEach(i=>(groups[i[0]]??=[]).push(i));
-  menuEl.innerHTML=Object.entries(groups).map(([category,rows])=>`<section><h2 class="section-title">${category}</h2><div class="grid">${rows.map(item=>{
-    const id=items.indexOf(item),n=cart[id]||0;
-    return `<article class="item"><div><h3>${item[1]}</h3><p>${item[3]}</p><div class="meta">${category==='Dessert Tins'?'Individual dessert tin':'Combo offer'}</div><div class="add">${n?`<div class="qty"><button type="button" data-dec="${id}" aria-label="Remove one">−</button><span>${n}</span><button type="button" data-inc="${id}" aria-label="Add one">+</button></div>`:`<button type="button" data-inc="${id}" aria-label="Add ${item[1]}">+</button><small style="font:12px system-ui">Add to order</small>`}</div></div><div class="price">₹${item[2]}</div></article>`;
-  }).join('')}</div></section>`).join('')||'<p>No menu items found.</p>';
-  menuEl.querySelectorAll('[data-inc]').forEach(b=>b.addEventListener('click',()=>changeQuantity(+b.dataset.inc,1)));
-  menuEl.querySelectorAll('[data-dec]').forEach(b=>b.addEventListener('click',()=>changeQuantity(+b.dataset.dec,-1)));
+function renderMenu() {
+  const q = searchEl.value.trim().toLowerCase();
+
+  const filtered = items.filter(i =>
+    (activeCategory === 'All Menu' || i[0] === activeCategory) &&
+    i.join(' ').toLowerCase().includes(q)
+  );
+
+  const groups = {};
+  filtered.forEach(i => (groups[i[0]] ??= []).push(i));
+
+  menuEl.innerHTML = Object.entries(groups).map(([category, rows]) =>
+    `<section><h2 class="section-title">${category}</h2><div class="grid">${
+      rows.map(item => {
+        const id = items.indexOf(item);
+        const n = cart[id] || 0;
+
+        return `<article class="item">
+          <div>
+            <h3>${item[1]}</h3>
+            <p>${item[3]}</p>
+            <div class="meta">${category === 'Dessert Tins' ? 'Individual dessert tin' : 'Combo offer'}</div>
+            <div class="add">${
+              n
+                ? `<div class="qty">
+                    <button type="button" data-dec="${id}" aria-label="Remove one">−</button>
+                    <span>${n}</span>
+                    <button type="button" data-inc="${id}" aria-label="Add one">+</button>
+                  </div>`
+                : `<button type="button" data-inc="${id}" aria-label="Add ${item[1]}">+</button>
+                   <small style="font:12px system-ui">Add to order</small>`
+            }</div>
+          </div>
+          <div class="price">₹${item[2]}</div>
+        </article>`;
+      }).join('')
+    }</div></section>`
+  ).join('') || '<p>No menu items found.</p>';
+
+  menuEl.querySelectorAll('[data-inc]').forEach(b =>
+    b.addEventListener('click', () => changeQuantity(+b.dataset.inc, 1))
+  );
+
+  menuEl.querySelectorAll('[data-dec]').forEach(b =>
+    b.addEventListener('click', () => changeQuantity(+b.dataset.dec, -1))
+  );
 }
 
-function changeQuantity(id,d){cart[id]=(cart[id]||0)+d;if(cart[id]<=0)delete cart[id];renderMenu();renderCart();}
-function getTotal(){return Object.entries(cart).reduce((s,[id,n])=>s+items[+id][2]*n,0);}
-
-function renderCart(){
-  const entries=Object.entries(cart);cartLinesEl.className=entries.length?'':'empty';
-  cartLinesEl.innerHTML=entries.length?entries.map(([id,n])=>`<div class="cartline"><span>${items[+id][1]} × ${n}</span><strong>₹${items[+id][2]*n}</strong></div>`).join(''):'Your cart is empty. Add a dessert tin or combo.';
-  totalEl.textContent='₹'+getTotal();messageEl.textContent='';
+function changeQuantity(id, d) {
+  cart[id] = (cart[id] || 0) + d;
+  if (cart[id] <= 0) delete cart[id];
+  renderMenu();
+  renderCart();
 }
 
-function makeOrderMessage(){
-  const name=document.getElementById('customer').value.trim(),method=document.getElementById('payment').value;
-  const lines=Object.entries(cart).map(([id,n])=>`${items[+id][1]} × ${n} = ₹${items[+id][2]*n}`);
-  return ['MAVIQ DESSERT ORDER','--------------------',...(name?[`Customer: ${name}`]:[]),...lines,'--------------------',`Total: ₹${getTotal()}`,`Payment option: ${method==='Cash'?'Cash at counter':'Online (Razorpay)'}`].join('\n');
+function getTotal() {
+  return Object.entries(cart).reduce(
+    (s, [id, n]) => s + items[+id][2] * n,
+    0
+  );
 }
 
-placeButton.addEventListener('click',async()=>{
-  if(!Object.keys(cart).length){messageEl.textContent='Please add at least one item first.';return;}
-  const method=document.getElementById('payment').value,orderMessage=makeOrderMessage();
-  if(method==='Cash'){window.open(`https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(orderMessage)}`,'_blank');messageEl.textContent='WhatsApp opened. Press Send to submit your order.';return;}
-  placeButton.disabled=true;messageEl.textContent='Opening secure payment checkout...';
+function renderCart() {
+  const entries = Object.entries(cart);
+  cartLinesEl.className = entries.length ? '' : 'empty';
 
-  try{
+  cartLinesEl.innerHTML = entries.length
+    ? entries.map(([id, n]) =>
+        `<div class="cartline">
+          <span>${items[+id][1]} × ${n}</span>
+          <strong>₹${items[+id][2] * n}</strong>
+        </div>`
+      ).join('')
+    : 'Your cart is empty. Add a dessert tin or combo.';
+
+  totalEl.textContent = '₹' + getTotal();
+  messageEl.textContent = '';
+}
+
+function makeOrderMessage() {
+  const name = document.getElementById('customer').value.trim();
+  const method = document.getElementById('payment').value;
+
+  const lines = Object.entries(cart).map(([id, n]) =>
+    `${items[+id][1]} × ${n} = ₹${items[+id][2] * n}`
+  );
+
+  return [
+    'MAVIQ DESSERT ORDER',
+    '--------------------',
+    ...(name ? [`Customer: ${name}`] : []),
+    ...lines,
+    '--------------------',
+    `Total: ₹${getTotal()}`,
+    `Payment option: ${method === 'Cash' ? 'Cash at counter' : 'Online (Razorpay)'}`
+  ].join('\n');
+}
+
+placeButton.addEventListener('click', async () => {
+  if (!Object.keys(cart).length) {
+    messageEl.textContent = 'Please add at least one item first.';
+    return;
+  }
+
+  const method = document.getElementById('payment').value;
+  const orderMessage = makeOrderMessage();
+
+  // CASH ORDER
+  if (method === 'Cash') {
+    window.open(
+      `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(orderMessage)}`,
+      '_blank'
+    );
+
+    messageEl.textContent = 'WhatsApp opened. Press Send to submit your order.';
+    return;
+  }
+
+  // ONLINE PAYMENT
+  placeButton.disabled = true;
+  messageEl.textContent = 'Creating secure payment order...';
+
+  try {
+    if (typeof window.Razorpay !== 'function') {
+      throw new Error('Razorpay checkout could not load. Please refresh and try again.');
+    }
+
+    const cartItems = Object.entries(cart).map(([id, quantity]) => ({
+      id: Number(id),
+      quantity
+    }));
+
     const response = await fetch('/api/create-order', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        items: Object.entries(cart).map(([id, quantity]) => ({
-          id: Number(id),
-          quantity
-        }))
-      })
+      body: JSON.stringify({ items: cartItems })
     });
 
     const order = await response.json();
@@ -151,27 +275,102 @@ placeButton.addEventListener('click',async()=>{
       throw new Error(order.error || 'Could not create payment order.');
     }
 
-    const checkout=new Razorpay({key:order.key_id,amount:order.amount,currency:order.currency,name:'MAVIQ',description:'MAVIQ dessert order',order_id:order.order_id,prefill:{name:document.getElementById('customer').value.trim()},theme:{color:'#d99b25'},
-      handler:async function(payment){
-        messageEl.textContent='Verifying payment...';
-        try{
-          const vr=await fetch('/api/verify-payment',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({razorpay_order_id:payment.razorpay_order_id,razorpay_payment_id:payment.razorpay_payment_id,razorpay_signature:payment.razorpay_signature})});
-          const result=await vr.json();if(!vr.ok||!result.verified)throw new Error('Payment verification failed.');
-          const paidOrder=orderMessage+'\nPayment: Razorpay\nPayment ID: '+payment.razorpay_payment_id+'\nPayment status: Verified';
-          messageEl.textContent='Payment verified. Opening WhatsApp...';
-          window.location.href=`https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(paidOrder)}`;
-        }catch(e){messageEl.textContent='Payment verification failed. Please contact MAVIQ before placing another order.';placeButton.disabled=false;}
+    // Validate the server response before opening checkout.
+    if (
+      !order.order_id ||
+      !order.verification_token ||
+      !order.key_id ||
+      !order.amount ||
+      !order.currency
+    ) {
+      throw new Error('Invalid order response from server.');
+    }
+
+    const checkout = new Razorpay({
+      key: order.key_id,
+      amount: order.amount,
+      currency: order.currency,
+      name: 'MAVIQ',
+      description: 'MAVIQ dessert order',
+      order_id: order.order_id,
+      prefill: {
+        name: document.getElementById('customer').value.trim()
       },
-      modal:{ondismiss:function(){messageEl.textContent='Checkout closed. If you completed a payment, check its status before trying again.';placeButton.disabled=false;}}
+      theme: { color: '#d99b25' },
+
+      handler: async function(payment) {
+        messageEl.textContent = 'Verifying payment...';
+
+        try {
+          const vr = await fetch('/api/verify-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              razorpay_order_id: payment.razorpay_order_id,
+              razorpay_payment_id: payment.razorpay_payment_id,
+              razorpay_signature: payment.razorpay_signature,
+
+              // IMPORTANT: send the server-signed token.
+              verification_token: order.verification_token
+            })
+          });
+
+          const result = await vr.json();
+
+          if (!vr.ok || !result.verified) {
+            throw new Error(
+              result.error || 'Payment verification failed.'
+            );
+          }
+
+          const paidOrder =
+            orderMessage +
+            '\nPayment: Razorpay' +
+            '\nPayment ID: ' + payment.razorpay_payment_id +
+            '\nPayment status: Verified';
+
+          messageEl.textContent = 'Payment verified. Opening WhatsApp...';
+
+          window.location.href =
+            `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(paidOrder)}`;
+
+        } catch (e) {
+          messageEl.textContent =
+            'Payment verification failed. Please contact MAVIQ before placing another order.';
+          placeButton.disabled = false;
+        }
+      },
+
+      modal: {
+        ondismiss: function() {
+          messageEl.textContent =
+            'Checkout closed. If you completed a payment, check its status before trying again.';
+          placeButton.disabled = false;
+        }
+      }
     });
 
-    checkout.on('payment.failed',function(){messageEl.textContent='Payment failed. Please check payment status before retrying.';placeButton.disabled=false;});
+    checkout.on('payment.failed', function() {
+      messageEl.textContent =
+        'Payment failed. Please check payment status before retrying.';
+      placeButton.disabled = false;
+    });
+
     checkout.open();
-  }catch(e){messageEl.textContent=e.message||'Unable to start payment. Please try again.';placeButton.disabled=false;}
+
+  } catch (e) {
+    messageEl.textContent =
+      e.message || 'Unable to start payment. Please try again.';
+    placeButton.disabled = false;
+  }
 });
 
-searchEl.addEventListener('input',renderMenu);
-renderTabs();renderMenu();renderCart();
+searchEl.addEventListener('input', renderMenu);
+
+renderTabs();
+renderMenu();
+renderCart();
 </script>
 </body>
 </html>
+```
