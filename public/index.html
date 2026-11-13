@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -93,10 +94,12 @@ const cart = {};
 let activeCategory = 'All Menu';
 const menuEl=document.getElementById('menu'),tabsEl=document.getElementById('tabs'),searchEl=document.getElementById('search');
 const cartLinesEl=document.getElementById('cartlines'),totalEl=document.getElementById('total'),messageEl=document.getElementById('confirmation'),placeButton=document.getElementById('place');
+
 function renderTabs(){
   tabsEl.innerHTML=categories.map(c=>`<button type="button" class="tab ${c===activeCategory?'active':''}" data-category="${c}">${c}</button>`).join('');
   tabsEl.querySelectorAll('[data-category]').forEach(b=>b.addEventListener('click',()=>{activeCategory=b.dataset.category;renderTabs();renderMenu();}));
 }
+
 function renderMenu(){
   const q=searchEl.value.trim().toLowerCase();
   const filtered=items.filter(i=>(activeCategory==='All Menu'||i[0]===activeCategory)&&(i.join(' ').toLowerCase().includes(q)));
@@ -108,43 +111,45 @@ function renderMenu(){
   menuEl.querySelectorAll('[data-inc]').forEach(b=>b.addEventListener('click',()=>changeQuantity(+b.dataset.inc,1)));
   menuEl.querySelectorAll('[data-dec]').forEach(b=>b.addEventListener('click',()=>changeQuantity(+b.dataset.dec,-1)));
 }
+
 function changeQuantity(id,d){cart[id]=(cart[id]||0)+d;if(cart[id]<=0)delete cart[id];renderMenu();renderCart();}
 function getTotal(){return Object.entries(cart).reduce((s,[id,n])=>s+items[+id][2]*n,0);}
+
 function renderCart(){
   const entries=Object.entries(cart);cartLinesEl.className=entries.length?'':'empty';
   cartLinesEl.innerHTML=entries.length?entries.map(([id,n])=>`<div class="cartline"><span>${items[+id][1]} × ${n}</span><strong>₹${items[+id][2]*n}</strong></div>`).join(''):'Your cart is empty. Add a dessert tin or combo.';
   totalEl.textContent='₹'+getTotal();messageEl.textContent='';
 }
+
 function makeOrderMessage(){
   const name=document.getElementById('customer').value.trim(),method=document.getElementById('payment').value;
   const lines=Object.entries(cart).map(([id,n])=>`${items[+id][1]} × ${n} = ₹${items[+id][2]*n}`);
   return ['MAVIQ DESSERT ORDER','--------------------',...(name?[`Customer: ${name}`]:[]),...lines,'--------------------',`Total: ₹${getTotal()}`,`Payment option: ${method==='Cash'?'Cash at counter':'Online (Razorpay)'}`].join('\n');
 }
+
 placeButton.addEventListener('click',async()=>{
   if(!Object.keys(cart).length){messageEl.textContent='Please add at least one item first.';return;}
   const method=document.getElementById('payment').value,orderMessage=makeOrderMessage();
   if(method==='Cash'){window.open(`https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(orderMessage)}`,'_blank');messageEl.textContent='WhatsApp opened. Press Send to submit your order.';return;}
   placeButton.disabled=true;messageEl.textContent='Opening secure payment checkout...';
+
   try{
-   
-const response = await fetch('/api/create-order', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    items: Object.entries(cart).map(([id, quantity]) => ({
-      id: Number(id),
-      quantity
-    }))
-  })
-});
+    const response = await fetch('/api/create-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        items: Object.entries(cart).map(([id, quantity]) => ({
+          id: Number(id),
+          quantity
+        }))
+      })
+    });
 
-const order = await response.json();
+    const order = await response.json();
 
-if (!response.ok) {
-  throw new Error(order.error || 'Could not create payment order.');
-}
-  throw new Error(order.error || 'Could not create payment order.');
-}
+    if (!response.ok) {
+      throw new Error(order.error || 'Could not create payment order.');
+    }
 
     const checkout=new Razorpay({key:order.key_id,amount:order.amount,currency:order.currency,name:'MAVIQ',description:'MAVIQ dessert order',order_id:order.order_id,prefill:{name:document.getElementById('customer').value.trim()},theme:{color:'#d99b25'},
       handler:async function(payment){
@@ -159,10 +164,12 @@ if (!response.ok) {
       },
       modal:{ondismiss:function(){messageEl.textContent='Checkout closed. If you completed a payment, check its status before trying again.';placeButton.disabled=false;}}
     });
+
     checkout.on('payment.failed',function(){messageEl.textContent='Payment failed. Please check payment status before retrying.';placeButton.disabled=false;});
     checkout.open();
   }catch(e){messageEl.textContent=e.message||'Unable to start payment. Please try again.';placeButton.disabled=false;}
 });
+
 searchEl.addEventListener('input',renderMenu);
 renderTabs();renderMenu();renderCart();
 </script>
