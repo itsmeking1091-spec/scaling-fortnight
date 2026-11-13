@@ -323,10 +323,11 @@ export default {
           )
         ]);
 
-        if (
-          payment.order_id !== order.id ||
-          order.id !== razorpay_order_id
-        ) {
+       if (
+  payment.id !== razorpay_payment_id ||
+  payment.order_id !== order.id ||
+  order.id !== razorpay_order_id
+) {
           return json({
             verified: false,
             error: "Payment/order mismatch"
