@@ -143,6 +143,8 @@ const order = await response.json();
 if (!response.ok) {
   throw new Error(order.error || 'Could not create payment order.');
 }
+  throw new Error(order.error || 'Could not create payment order.');
+}
 
     const checkout=new Razorpay({key:order.key_id,amount:order.amount,currency:order.currency,name:'MAVIQ',description:'MAVIQ dessert order',order_id:order.order_id,prefill:{name:document.getElementById('customer').value.trim()},theme:{color:'#d99b25'},
       handler:async function(payment){
