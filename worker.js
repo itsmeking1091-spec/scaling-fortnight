@@ -75,19 +75,20 @@ export default {
     }
 
    
+
 if (url.pathname === "/api/create-order") {
   try {
     const body = await request.json();
 
     const PRODUCT_PRICES = [
-      16900, // Belgium Chocolate Mousse
-      16900, // Biscoff Cheesecake
-      18900, // Blueberry Cheesecake
-      18900, // Raspberry Cheesecake
-      31800, // Duo Delight Combo
-      35800, // Berry Bliss Combo
-      52700, // Classic Trio Combo
-      61300  // MAVIQ Signature Combo
+      16900,
+      16900,
+      18900,
+      18900,
+      31800,
+      35800,
+      52700,
+      61300
     ];
 
     if (!Array.isArray(body.items) ||
@@ -146,16 +147,40 @@ if (url.pathname === "/api/create-order") {
       }, 502);
     }
 
+    // Create a signed record of the original cart and order.
+    const tokenData = {
+      order_id: result.id,
+      amount: amount,
+      currency: "INR",
+      items: body.items.map(item => ({
+        id: item.id,
+        quantity: item.quantity
+      })),
+      expires_at: Date.now() + 15 * 60 * 1000
+    };
+
+    const encodedToken = btoa(
+      JSON.stringify(tokenData)
+    ).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+
+    const tokenSignature = await hmacSha256(
+      env.RAZORPAY_KEY_SECRET,
+      encodedToken
+    );
+
     return json({
       order_id: result.id,
       amount: result.amount,
       currency: result.currency,
-      key_id: env.RAZORPAY_KEY_ID
+      key_id: env.RAZORPAY_KEY_ID,
+      verification_token: encodedToken + "." + tokenSignature
     });
+
   } catch {
     return json({ error: "Unable to create order" }, 400);
   }
 }
+
 
 
     if (url.pathname === "/api/verify-payment") {
