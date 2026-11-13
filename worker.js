@@ -183,86 +183,155 @@ if (url.pathname === "/api/create-order") {
 
 
 
-    if (url.pathname === "/api/verify-payment") {
-      try {
-        const body = await request.json();
-        const {
-          razorpay_order_id,
-          razorpay_payment_id,
-          razorpay_signature
-        } = body;
+  
+if (url.pathname === "/api/verify-payment") {
+  try {
+    const body = await request.json();
 
-        if (
-          typeof razorpay_order_id !== "string" ||
-          typeof razorpay_payment_id !== "string" ||
-          typeof razorpay_signature !== "string" ||
-          !/^order_[A-Za-z0-9]+$/.test(razorpay_order_id) ||
-          !/^pay_[A-Za-z0-9]+$/.test(razorpay_payment_id)
-        ) {
-          return json({ error: "Invalid payment details" }, 400);
-        }
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      verification_token
+    } = body;
 
-        const expected = await hmacSha256(
-          env.RAZORPAY_KEY_SECRET,
-          razorpay_order_id + "|" + razorpay_payment_id
-        );
-
-        if (!safeEqual(expected, razorpay_signature)) {
-          return json({
-            verified: false,
-            error: "Signature verification failed"
-          }, 400);
-        }
-
-        // Fetch the actual order and payment from Razorpay.
-        const [order, payment] = await Promise.all([
-          razorpayGet(env, "/orders/" +
-            encodeURIComponent(razorpay_order_id)),
-          razorpayGet(env, "/payments/" +
-            encodeURIComponent(razorpay_payment_id))
-        ]);
-
-        // Confirm this payment belongs to this order.
-        if (
-          payment.order_id !== order.id ||
-          order.id !== razorpay_order_id
-        ) {
-          return json({
-            verified: false,
-            error: "Payment/order mismatch"
-          }, 400);
-        }
-
-        // Only confirm fully captured payments.
-        if (
-          payment.status !== "captured" ||
-          payment.amount !== order.amount ||
-          payment.currency !== order.currency ||
-          order.currency !== "INR"
-        ) {
-          return json({
-            verified: false,
-            error: "Payment is not captured or amount does not match"
-          }, 400);
-        }
-
-        return json({
-          verified: true,
-          status: payment.status,
-          amount: payment.amount,
-          currency: payment.currency,
-          razorpay_order_id: order.id,
-          razorpay_payment_id: payment.id
-        });
-      } catch {
-        return json({
-          verified: false,
-          error: "Unable to verify payment with Razorpay"
-        }, 502);
-      }
+    if (
+      typeof razorpay_order_id !== "string" ||
+      typeof razorpay_payment_id !== "string" ||
+      typeof razorpay_signature !== "string" ||
+      typeof verification_token !== "string" ||
+      !/^order_[A-Za-z0-9]+$/.test(razorpay_order_id) ||
+      !/^pay_[A-Za-z0-9]+$/.test(razorpay_payment_id)
+    ) {
+      return json({ error: "Invalid payment details" }, 400);
     }
 
-    if (url.pathname.startsWith("/api/")) {
+    // Verify the server-generated cart token.
+    const tokenParts = verification_token.split(".");
+
+    if (tokenParts.length !== 2) {
+      return json({ verified: false, error: "Invalid order token" }, 400);
+    }
+
+    const [encodedToken, tokenSignature] = tokenParts;
+
+    const expectedTokenSignature = await hmacSha256(
+      env.RAZORPAY_KEY_SECRET,
+      encodedToken
+    );
+
+    if (!safeEqual(expectedTokenSignature, tokenSignature)) {
+      return json({ verified: false, error: "Invalid order token signature" }, 400);
+    }
+
+    // Decode the signed cart data.
+    let tokenData;
+
+    try {
+      const base64 = encodedToken
+        .replace(/-/g, "+")
+        .replace(/_/g, "/");
+
+      tokenData = JSON.parse(
+        atob(base64 + "=".repeat((4 - base64.length % 4) % 4))
+      );
+    } catch {
+      return json({ verified: false, error: "Invalid order token data" }, 400);
+    }
+
+    const PRODUCT_PRICES = [
+      16900, 16900, 18900, 18900,
+      31800, 35800, 52700, 61300
+    ];
+
+    if (
+      tokenData.order_id !== razorpay_order_id ||
+      tokenData.currency !== "INR" ||
+      !Number.isSafeInteger(tokenData.amount) ||
+      !Number.isSafeInteger(tokenData.expires_at) ||
+      tokenData.expires_at < Date.now() ||
+      !Array.isArray(tokenData.items) ||
+      tokenData.items.length < 1 ||
+      tokenData.items.length > 8
+    ) {
+      return json({ verified: false, error: "Order token expired or invalid" }, 400);
+    }
+
+    // Recalculate the original cart total.
+    let expectedAmount = 0;
+    const seen = new Set();
+
+    for (const item of tokenData.items) {
+      if (
+        !Number.isInteger(item.id) ||
+        item.id < 0 ||
+        item.id >= PRODUCT_PRICES.length ||
+        !Number.isInteger(item.quantity) ||
+        item.quantity < 1 ||
+        item.quantity > 10 ||
+        seen.has(item.id)
+      ) {
+        return json({ verified: false, error: "Invalid cart in token" }, 400);
+      }
+
+      seen.add(item.id);
+      expectedAmount += PRODUCT_PRICES[item.id] * item.quantity;
+    }
+
+    if (expectedAmount !== tokenData.amount) {
+      return json({ verified: false, error: "Cart amount mismatch" }, 400);
+    }
+
+    // Verify Razorpay checkout signature.
+    const expectedSignature = await hmacSha256(
+      env.RAZORPAY_KEY_SECRET,
+      razorpay_order_id + "|" + razorpay_payment_id
+    );
+
+    if (!safeEqual(expectedSignature, razorpay_signature)) {
+      return json({ verified: false, error: "Payment signature invalid" }, 400);
+    }
+
+    // Fetch actual Razorpay order and payment.
+    const [order, payment] = await Promise.all([
+      razorpayGet(env, "/orders/" + encodeURIComponent(razorpay_order_id)),
+      razorpayGet(env, "/payments/" + encodeURIComponent(razorpay_payment_id))
+    ]);
+
+    if (
+      payment.order_id !== order.id ||
+      order.id !== razorpay_order_id
+    ) {
+      return json({ verified: false, error: "Payment/order mismatch" }, 400);
+    }
+
+    if (
+      order.amount !== tokenData.amount ||
+      order.currency !== "INR" ||
+      payment.status !== "captured" ||
+      payment.amount !== tokenData.amount ||
+      payment.currency !== "INR"
+    ) {
+      return json({ verified: false, error: "Payment amount or status mismatch" }, 400);
+    }
+
+    return json({
+      verified: true,
+      status: payment.status,
+      amount: payment.amount,
+      currency: payment.currency,
+      razorpay_order_id: order.id,
+      razorpay_payment_id: payment.id
+    });
+
+  } catch {
+    return json({
+      verified: false,
+      error: "Unable to verify payment with Razorpay"
+    }, 502);
+  }
+}
+ {
       return json({ error: "API route not found" }, 404);
     }
 
