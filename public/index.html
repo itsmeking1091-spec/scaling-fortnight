@@ -24,6 +24,16 @@ body{margin:0;background:#080707;color:#fff7e8;font-family:Georgia,"Times New Ro
 .section-title{text-align:center;color:var(--gold);font-size:25px;margin:22px 0 13px;text-shadow:0 0 10px #ad5b13}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:13px}
 .item{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;background:linear-gradient(145deg,#1b1512,#0c0a09);border:1px solid #806020;border-radius:15px;padding:15px;box-shadow:0 5px 18px #0008}
+.item-copy{flex:1;min-width:0}
+.item-visual{flex:0 0 96px;width:96px;display:flex;flex-direction:column;align-items:flex-end;gap:9px}
+.item-image{display:block;width:96px;height:120px;object-fit:cover;object-position:center;border-radius:11px;border:1px solid #9b742f;box-shadow:0 3px 12px #0009;background:#120d09}
+@media(max-width:560px){
+  .item{gap:9px;padding:12px}
+  .item-visual{flex-basis:82px;width:82px}
+  .item-image{width:82px;height:104px}
+  .price{font-size:17px}
+}
+
 .item h3{font-size:18px;line-height:1.2;margin:0 0 7px;color:#fff8e9}
 .item p{font:13px/1.45 system-ui,sans-serif;color:#d8c8b0;margin:0}
 .price{font:900 19px system-ui,sans-serif;color:#ffe16b;white-space:nowrap}
@@ -107,14 +117,14 @@ body{margin:0;background:#080707;color:#fff7e8;font-family:Georgia,"Times New Ro
 const WHATSAPP_PHONE = '918106061091';
 
 const items = [
-  ['Dessert Tins','Belgium Chocolate Mousse',169,'250 ml • Rich Belgian chocolate mousse'],
-  ['Dessert Tins','Biscoff Cheesecake',169,'250 ml • Creamy cheesecake with Biscoff'],
-  ['Dessert Tins','Blueberry Cheesecake',189,'250 ml • Blueberry cheesecake'],
-  ['Dessert Tins','Raspberry Cheesecake',189,'250 ml • Raspberry cheesecake'],
-  ['Combo Offers','Duo Delight Combo',318,'Any 2 dessert tins • 250 ml each • Save ₹20'],
-  ['Combo Offers','Berry Bliss Combo',358,'Blueberry + Raspberry • 250 ml each • Save ₹20'],
-  ['Combo Offers','Classic Trio Combo',527,'Any 3 dessert tins • 250 ml each • Save ₹30'],
-  ['Combo Offers','MAVIQ Signature Combo',613,'All 4 flavours • 250 ml each • Best value']
+  ['Dessert Tins','Belgium Chocolate Mousse',169,'250 ml • Rich Belgian chocolate mousse','/images/belgium-chocolate-mousse.jpg'],
+  ['Dessert Tins','Biscoff Cheesecake',169,'250 ml • Creamy cheesecake with Biscoff','/images/biscoff-cheesecake.jpg'],
+  ['Dessert Tins','Blueberry Cheesecake',189,'250 ml • Blueberry cheesecake','/images/blueberry-cheesecake.jpg'],
+  ['Dessert Tins','Raspberry Cheesecake',189,'250 ml • Raspberry cheesecake','/images/raspberry-cheesecake.jpg'],
+  ['Combo Offers','Duo Delight Combo',318,'Any 2 dessert tins • 250 ml each • Save ₹20','/images/duo-delight-combo.jpg'],
+  ['Combo Offers','Berry Bliss Combo',358,'Blueberry + Raspberry • 250 ml each • Save ₹20','/images/berry-bliss-combo.jpg'],
+  ['Combo Offers','Classic Trio Combo',527,'Any 3 dessert tins • 250 ml each • Save ₹30','/images/classic-trio-combo.jpg'],
+  ['Combo Offers','MAVIQ Signature Combo',613,'All 4 flavours • 250 ml each • Best value','/images/maviq-signature-combo.jpg']
 ];
 
 const categories = ['All Menu', ...new Set(items.map(item => item[0]))];
@@ -228,7 +238,7 @@ function renderMenu() {
             const n = cart[id] || 0;
 
             return `<article class="item">
-              <div>
+              <div class="item-copy">
                 <h3>${item[1]}</h3>
                 <p>${item[3]}</p>
                 <div class="meta">${category === 'Dessert Tins' ? 'Individual dessert tin' : 'Combo offer'}</div>
@@ -243,7 +253,10 @@ function renderMenu() {
                        <small style="font:12px system-ui">Add to order</small>`
                 }</div>
               </div>
-              <div class="price">₹${item[2]}</div>
+              <div class="item-visual">
+                <div class="price">₹${item[2]}</div>
+                <img class="item-image" src="${item[4]}" alt="${item[1]}" loading="lazy">
+              </div>
             </article>`;
           }).join('')
         }
